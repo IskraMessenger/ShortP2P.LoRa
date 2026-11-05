@@ -1,0 +1,10 @@
+---
+description: Базовая Scrum-доска YouTrack для планирования и трекинга
+alwaysApply: true
+---
+
+# YouTrack Scrum
+
+- Базовая Scrum-доска проекта: https://botticelli.youtrack.cloud/projects/SMT
+- Задачи, спринты, статусы и привязку работы вести относительно этой доски (проект SMT), если пользователь не указал другую.
+- При создании/обсуждении задач ссылаться на SMT и YouTrack (`botticelli.youtrack.cloud`), а не на сторонние трекеры, пока явно не сказано иное.
