@@ -1,0 +1,5 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/ShortP2P.LoRa/ShortP2P.LoRa.csproj" />
+  </Folder>
+</Solution>
