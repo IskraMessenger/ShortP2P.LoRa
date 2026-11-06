@@ -220,6 +220,10 @@ public sealed class MeshtasticSerialLink : IMeshLink
     {
         try
         {
+            // Field-level visibility for link bring-up: every top-level FromRadio field.
+            MeshtasticProto.ReadFields(payload, (number, wireType, _, bytes) =>
+                _logger?.LogDebug("FromRadio field {Number} (wire {Wire}, {Len} B)", number, wireType, bytes.Length));
+
             MeshtasticProto.ReadFromRadio(
                 payload,
                 onPacket: frame =>
