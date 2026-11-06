@@ -1,0 +1,219 @@
+using System.Buffers.Binary;
+
+namespace ShortP2P.LoRa.Link;
+
+/// <summary>
+///     Minimal hand-rolled protobuf subset for the Meshtastic serial API.
+///     Field numbers follow meshtastic/protobufs (mesh.proto):
+///     MeshPacket: from=1(fixed32), to=2(fixed32), channel=3, decoded=4(Data), id=6(fixed32), hop_limit=9.
+///     Data: portnum=1(varint), payload=2(bytes). PortNum PRIVATE_APP = 256.
+///     MyNodeInfo: my_node_num=1(varint). FromRadio: packet=2, my_info=3. ToRadio: packet=1, want_config_id=3.
+///     Serial framing: 0x94 0xC3 + uint16 BE length + protobuf payload.
+/// </summary>
+internal static class MeshtasticProto
+{
+    public const byte Start1 = 0x94;
+    public const byte Start2 = 0xC3;
+    public const int MaxPacketBytes = 512;
+
+    public const uint PortNumPrivateApp = 256;
+
+    public static byte[] BuildToRadioWantConfig(uint configId)
+    {
+        using var ms = new MemoryStream();
+        WriteVarint(ms, (3 << 3) | 0); // want_config_id, varint
+        WriteVarint(ms, configId);
+        return ms.ToArray();
+    }
+
+    public static byte[] BuildToRadioPacket(uint to, uint packetId, byte[] payload, byte hopLimit)
+    {
+        using var data = new MemoryStream();
+        WriteVarint(data, (1 << 3) | 0); // portnum
+        WriteVarint(data, PortNumPrivateApp);
+        WriteVarint(data, (2 << 3) | 2); // payload, length-delimited
+        WriteVarint(data, (uint)payload.Length);
+        data.Write(payload, 0, payload.Length);
+
+        var dataBytes = data.ToArray();
+
+        using var packet = new MemoryStream();
+        WriteVarint(packet, (2 << 3) | 5); // to, fixed32
+        WriteFixed32(packet, to);
+        WriteVarint(packet, (4 << 3) | 2); // decoded
+        WriteVarint(packet, (uint)dataBytes.Length);
+        packet.Write(dataBytes, 0, dataBytes.Length);
+        WriteVarint(packet, (6 << 3) | 5); // id, fixed32
+        WriteFixed32(packet, packetId);
+        WriteVarint(packet, (9 << 3) | 0); // hop_limit
+        WriteVarint(packet, hopLimit);
+
+        var packetBytes = packet.ToArray();
+
+        using var toRadio = new MemoryStream();
+        WriteVarint(toRadio, (1 << 3) | 2); // packet
+        WriteVarint(toRadio, (uint)packetBytes.Length);
+        toRadio.Write(packetBytes, 0, packetBytes.Length);
+        return toRadio.ToArray();
+    }
+
+    public static byte[] Frame(byte[] protobufPayload)
+    {
+        if (protobufPayload.Length > MaxPacketBytes)
+            throw new InvalidOperationException($"Meshtastic frame too large: {protobufPayload.Length} bytes.");
+        var framed = new byte[4 + protobufPayload.Length];
+        framed[0] = Start1;
+        framed[1] = Start2;
+        BinaryPrimitives.WriteUInt16BigEndian(framed.AsSpan(2, 2), (ushort)protobufPayload.Length);
+        protobufPayload.CopyTo(framed, 4);
+        return framed;
+    }
+
+    /// <summary>One parsed protobuf field. Bytes is valid only for length-delimited / fixed fields.</summary>
+    internal delegate void ProtoFieldHandler(int number, int wireType, uint varint, ReadOnlySpan<byte> bytes);
+
+    /// <summary>Parse a FromRadio payload; invokes handlers for packet / my_info fields.</summary>
+    public static void ReadFromRadio(ReadOnlySpan<byte> payload, Action<MeshLinkFrame>? onPacket,
+        Action<uint>? onMyNodeNum)
+    {
+        ReadFields(payload, (number, wireType, _, bytes) =>
+        {
+            switch (number)
+            {
+                case 2 when wireType == 2:
+                    TryReadMeshPacket(bytes, onPacket);
+                    break;
+                case 3 when wireType == 2:
+                    TryReadMyNodeInfo(bytes, onMyNodeNum);
+                    break;
+            }
+        });
+    }
+
+    private static void TryReadMeshPacket(ReadOnlySpan<byte> payload, Action<MeshLinkFrame>? onPacket)
+    {
+        uint from = 0, to = 0;
+        byte[]? decoded = null;
+
+        ReadFields(payload, (number, wireType, _, bytes) =>
+        {
+            switch (number, wireType)
+            {
+                case (1, 5):
+                    from = BinaryPrimitives.ReadUInt32LittleEndian(bytes);
+                    break;
+                case (2, 5):
+                    to = BinaryPrimitives.ReadUInt32LittleEndian(bytes);
+                    break;
+                case (4, 2):
+                    decoded = bytes.ToArray();
+                    break;
+            }
+        });
+
+        if (decoded == null || from == 0)
+            return;
+
+        uint? portNumber = null;
+        byte[]? data = null;
+        ReadFields(decoded, (number, wireType, varint, bytes) =>
+        {
+            switch (number, wireType)
+            {
+                case (1, 0):
+                    portNumber = varint;
+                    break;
+                case (2, 2):
+                    data = bytes.ToArray();
+                    break;
+            }
+        });
+
+        if (portNumber == PortNumPrivateApp && data is { Length: > 0 })
+            onPacket?.Invoke(new MeshLinkFrame(from, to, data));
+    }
+
+    private static void TryReadMyNodeInfo(ReadOnlySpan<byte> payload, Action<uint>? onMyNodeNum)
+    {
+        ReadFields(payload, (number, wireType, varint, _) =>
+        {
+            if (number == 1 && wireType == 0)
+                onMyNodeNum?.Invoke(varint);
+        });
+    }
+
+    /// <summary>Walk top-level protobuf fields. Unknown / malformed fields end the walk.</summary>
+    internal static void ReadFields(ReadOnlySpan<byte> payload, ProtoFieldHandler handler)
+    {
+        var o = 0;
+        while (o < payload.Length)
+        {
+            if (!TryReadVarint(payload, ref o, out var tag))
+                return;
+            var number = (int)(tag >> 3);
+            var wire = (int)(tag & 7);
+            switch (wire)
+            {
+                case 0: // varint
+                    if (!TryReadVarint(payload, ref o, out var v))
+                        return;
+                    handler(number, wire, v, default);
+                    break;
+                case 1: // 64-bit
+                    if (o + 8 > payload.Length)
+                        return;
+                    handler(number, wire, 0, payload.Slice(o, 8));
+                    o += 8;
+                    break;
+                case 2: // length-delimited
+                    if (!TryReadVarint(payload, ref o, out var len) || o + len > payload.Length)
+                        return;
+                    handler(number, wire, 0, payload.Slice(o, (int)len));
+                    o += (int)len;
+                    break;
+                case 5: // 32-bit
+                    if (o + 4 > payload.Length)
+                        return;
+                    handler(number, wire, 0, payload.Slice(o, 4));
+                    o += 4;
+                    break;
+                default:
+                    return;
+            }
+        }
+    }
+
+    private static bool TryReadVarint(ReadOnlySpan<byte> data, ref int offset, out uint value)
+    {
+        value = 0;
+        var shift = 0;
+        while (offset < data.Length && shift < 35)
+        {
+            var b = data[offset++];
+            value |= (uint)(b & 0x7F) << shift;
+            if ((b & 0x80) == 0)
+                return true;
+            shift += 7;
+        }
+
+        return false;
+    }
+
+    private static void WriteVarint(Stream stream, uint value)
+    {
+        while (value >= 0x80)
+        {
+            stream.WriteByte((byte)(value | 0x80));
+            value >>= 7;
+        }
+
+        stream.WriteByte((byte)value);
+    }
+
+    private static void WriteFixed32(Stream stream, uint value)
+    {
+        Span<byte> b = stackalloc byte[4];
+        BinaryPrimitives.WriteUInt32LittleEndian(b, value);
+        stream.Write(b);
+    }
+}

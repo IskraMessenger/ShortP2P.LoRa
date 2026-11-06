@@ -114,7 +114,7 @@ A single-frame datagram (chunking not needed) has no CRC header of its own.
 
 The CRC is the standard CRC-32 (polynomial `0xEDB88320`, reflected, initial `0xFFFFFFFF`, final XOR `0xFFFFFFFF`) — the same value as ZIP / `System.IO.Hashing.Crc32`.
 
-It is computed with the **hardware CRC instruction** when the target exposes one (for example SSE4.2 `crc32` on x86, ARMv8 `crc32x` via intrinsics). Where there is no hardware CRC, it falls back to a **slicing-by-4 table**: a 16-entry `uint32` table, one nibble (4 bits) at a time. Both paths give the same bytes; the wire value does not depend on which path the node used. The table is a fixed constant, not generated per target.
+It is computed with the **hardware CRC instruction** when the target exposes one for this polynomial (ARMv8 `crc32x` via intrinsics). Note that the x86 SSE4.2 `crc32` instruction computes CRC-32C (Castagnoli polynomial), **not** this CRC-32, so x86 targets use the software path. Where there is no hardware CRC, it falls back to a **nibble table**: a 16-entry `uint32` table, one nibble (4 bits) at a time. Both paths give the same bytes; the wire value does not depend on which path the node used. The table is a fixed constant, not generated per target.
 
 Every chunk of one datagram carries the same CRC type byte and the same CRC value. A chunk whose CRC type is not known, or whose CRC type / value disagrees with the rest of that datagram, is treated as corrupt and triggers REQ-RX-1; it is not guessed.
 
