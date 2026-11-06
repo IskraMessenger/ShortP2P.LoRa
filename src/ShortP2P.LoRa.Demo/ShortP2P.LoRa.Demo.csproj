@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <RootNamespace>ShortP2P.LoRa.Demo</RootNamespace>
+        <AssemblyName>meshatastic-demo</AssemblyName>
+        <Description>Console demo: sends 10-byte and 1-KB datagrams over the Meshatastic transport and prints received ones.</Description>
+        <IsPackable>false</IsPackable>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\ShortP2P.LoRa\ShortP2P.LoRa.csproj" />
+    </ItemGroup>
+
+</Project>
