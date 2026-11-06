@@ -164,6 +164,54 @@ Representative mapping (full table = Meshtastic region-by-country):
 
 ---
 
+## REQ-RF-7 — Logging
+
+The LoRa / Meshtastic transport MUST emit structured logs at the levels below. Timestamps use UTC with millisecond precision in the form `yyyy-MM-dd HH:mm:ss.fff` (example: `2025-12-02 19:12:32.123`).
+
+### Debug
+
+Log every radio TX and RX with peer addressing and UTC time:
+
+```text
+TX From: <networkId> To: <networkId> DateTimeUTC: <DateTimeUTC>
+RX From: <networkId> To: <networkId> DateTimeUTC: <DateTimeUTC>
+```
+
+Example:
+
+```text
+TX From: 0xA1B2C3D4 To: 0x11223344 DateTimeUTC: 2025-12-02 19:12:32.123
+RX From: 0x11223344 To: 0xA1B2C3D4 DateTimeUTC: 2025-12-02 19:12:32.456
+```
+
+`networkId` is the ShortP2P network identifier used on the transport (mapped from Meshtastic node id / channel as defined in SMT-1). Directional labels `From` / `To` are mandatory on both TX and RX lines.
+
+### Info
+
+Log lifecycle events:
+
+- connect to ESP (device / serial / transport link up), including device identity when known;
+- disconnect from ESP (link down, intentional stop, or unexpected loss);
+- session setup (start, success, failure reason at Info without dumping secrets).
+
+### Error
+
+Log failures that affect correctness or device health:
+
+- **protocol errors** — unexpected / invalid ShortP2P or Meshtastic framing, decode failures, sequence / handshake violations, oversized payloads rejected by transport rules;
+- **device errors** — ESP / radio I/O failures, timeouts, firmware NAK, unexpected reset, region/`UNSET` TX attempts blocked by stack.
+
+Error entries MUST include `DateTimeUTC` and enough context to diagnose (operation, peer `networkId` when applicable, error code / message). Do not log cryptographic key material or plaintext chat content at any level.
+
+### Acceptance (logging)
+
+1. With Debug enabled, each successful TX/RX produces a line matching the `From` / `To` / `DateTimeUTC` pattern above.
+2. Connect, disconnect, and session setup each produce at least one Info event.
+3. Injected protocol violation and simulated device fault each produce an Error event with UTC timestamp and context.
+4. Secrets and message plaintext are absent from Debug / Info / Error output.
+
+---
+
 ## Out of scope (here)
 
 - Replacing MessengerServer with Meshtastic MQTT as the primary cloud API (see SMT-1).
