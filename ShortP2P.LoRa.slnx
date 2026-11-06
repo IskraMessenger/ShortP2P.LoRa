@@ -3,6 +3,7 @@
     <File Path="docs/requirements-protocol.md" />
     <File Path="docs/requirements-rf.md" />
     <Project Path="src/ShortP2P.LoRa/ShortP2P.LoRa.csproj" />
+    <Project Path="src/ShortP2P.LoRa.Demo/ShortP2P.LoRa.Demo.csproj" />
     <Project Path="src/ShortP2P.LoRa.Tests/ShortP2P.LoRa.Tests.csproj" />
   </Folder>
 </Solution>
