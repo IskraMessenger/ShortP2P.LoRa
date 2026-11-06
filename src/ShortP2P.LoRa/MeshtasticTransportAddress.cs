@@ -5,7 +5,7 @@ namespace ShortP2P.LoRa;
 /// <summary>
 ///     TransportAddress helpers for kind 5: one address is one MeshId (REQ-TR-1, REQ-DIR-1).
 /// </summary>
-public static class MeshatasticTransportAddress
+public static class MeshtasticTransportAddress
 {
     public static TransportAddress ToTransportAddress(MeshId meshId)
     {
@@ -17,12 +17,12 @@ public static class MeshatasticTransportAddress
         ArgumentNullException.ThrowIfNull(address);
         if (address.Kind != TransportKind.Meshtastic)
             throw new ArgumentException(
-                $"Transport address kind {address.Kind} is not Meshatastic ({TransportKind.Meshtastic}).",
+                $"Transport address kind {address.Kind} is not Meshtastic ({TransportKind.Meshtastic}).",
                 nameof(address));
         return new MeshId(address.Data);
     }
 
-    public static bool IsMeshatastic(TransportAddress address)
+    public static bool IsMeshtastic(TransportAddress address)
     {
         return address.Kind == TransportKind.Meshtastic;
     }

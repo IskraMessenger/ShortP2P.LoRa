@@ -3,7 +3,7 @@ using System.Buffers.Binary;
 namespace ShortP2P.LoRa;
 
 /// <summary>
-///     Internal id of one Meshatastic/LoRa device: opaque bytes, length 1–8 (REQ-DIR-1).
+///     Internal id of one Meshtastic/LoRa device: opaque bytes, length 1–8 (REQ-DIR-1).
 ///     When the device exposes a hardware address this is its MAC (6 bytes);
 ///     for Meshtastic boards it is the 4-byte node number, big-endian.
 /// </summary>
