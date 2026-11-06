@@ -1,0 +1,10 @@
+<Project>
+    <PropertyGroup>
+        <!--
+          Root of the ShortP2P checkout that provides ShortP2P.Transport.Abstractions.
+          Default: sibling checkout (D:\Work layout). Override with -p:ShortP2PRoot=...
+          or an environment variable when this repo is used as a submodule inside ShortP2P.
+        -->
+        <ShortP2PRoot Condition="'$(ShortP2PRoot)' == ''">$(MSBuildThisFileDirectory)..\ShortP2P</ShortP2PRoot>
+    </PropertyGroup>
+</Project>
