@@ -10,19 +10,19 @@ using ShortP2P.Transport.Abstractions;
 namespace ShortP2P.LoRa;
 
 /// <summary>
-///     Meshatastic transport: ShortP2P <see cref="ITransport" /> (kind 5) over a Meshtastic board link.
+///     Meshtastic transport: ShortP2P <see cref="ITransport" /> (kind 5) over a Meshtastic board link.
 ///     Carries ShortP2P wire frames unchanged; splits large datagrams into chunks with CRC and
 ///     Send/Receive-Retry (REQ-TR-1, REQ-CHUNK-1, REQ-RETRY-1, REQ-RX-1), and maintains the
 ///     NetworkId → MeshId directory with snapshot sharing (REQ-DIR-2..4).
 /// </summary>
-public sealed class MeshatasticTransport : ITransport
+public sealed class MeshtasticTransport : ITransport
 {
     /// <summary>Broadcast radio destination; never stored in the directory.</summary>
     public const uint BroadcastNode = 0xFFFFFFFF;
 
     private static readonly byte[] ChatFrameBytes = [0x30, 0x01, 0x04, 0x02];
 
-    private readonly MeshatasticTransportOptions _options;
+    private readonly MeshtasticTransportOptions _options;
     private readonly IMeshLink _link;
     private readonly bool _ownsLink;
     private readonly ILogger? _logger;
@@ -37,18 +37,18 @@ public sealed class MeshatasticTransport : ITransport
     private int _snapshotPending;
     private bool _started;
 
-    public MeshatasticTransport(MeshatasticTransportOptions options, ILogger? logger = null)
+    public MeshtasticTransport(MeshtasticTransportOptions options, ILogger? logger = null)
         : this(options, new MeshtasticSerialLink(options.ComPort, options.BaudRate, logger), ownsLink: true, logger)
     {
     }
 
     /// <summary>Transport over a caller-provided board link (tests / custom hardware).</summary>
-    public MeshatasticTransport(MeshatasticTransportOptions options, IMeshLink link, ILogger? logger = null)
+    public MeshtasticTransport(MeshtasticTransportOptions options, IMeshLink link, ILogger? logger = null)
         : this(options, link, ownsLink: false, logger)
     {
     }
 
-    private MeshatasticTransport(MeshatasticTransportOptions options, IMeshLink link, bool ownsLink, ILogger? logger)
+    private MeshtasticTransport(MeshtasticTransportOptions options, IMeshLink link, bool ownsLink, ILogger? logger)
     {
         _options = options ?? throw new ArgumentNullException(nameof(options));
         _link = link ?? throw new ArgumentNullException(nameof(link));
@@ -84,7 +84,7 @@ public sealed class MeshatasticTransport : ITransport
         }
 
         LocalMeshId = MeshId.FromNodeNumber(node.Value);
-        _logger?.LogInformation("Meshatastic transport up on node {Node}", LocalMeshId.ToHex());
+        _logger?.LogInformation("Meshtastic transport up on node {Node}", LocalMeshId.ToHex());
 
         if (_options.LocalNetworkId != null)
             Directory.Remember(_options.LocalNetworkId, LocalMeshId, MeshSubject.Self, confirmed: true, DateTime.UtcNow);
@@ -126,7 +126,7 @@ public sealed class MeshatasticTransport : ITransport
 
         await _link.StopAsync(cancellationToken).ConfigureAwait(false);
         await PersistDirectoryAsync(CancellationToken.None).ConfigureAwait(false);
-        _logger?.LogInformation("Meshatastic transport stopped");
+        _logger?.LogInformation("Meshtastic transport stopped");
     }
 
     /// <inheritdoc />
@@ -147,7 +147,7 @@ public sealed class MeshatasticTransport : ITransport
                 $"Not a ShortP2P frame (first byte 0x{payload.Span[0]:X2}). Invite 0x30, handshake 0x01, session setup 0x04, cipher 0x02 expected.",
                 nameof(payload));
 
-        var meshId = MeshatasticTransportAddress.FromTransportAddress(destination);
+        var meshId = MeshtasticTransportAddress.FromTransportAddress(destination);
         if (!meshId.TryToNodeNumber(out var node))
             throw new ArgumentException("Only 4-byte (node number) MeshIds are supported by this link.", nameof(destination));
 
@@ -304,7 +304,7 @@ public sealed class MeshatasticTransport : ITransport
 
         _logger?.LogDebug("RX From: {From} DateTimeUTC: {Utc:yyyy-MM-dd HH:mm:ss.fff}", from.ToHex(), DateTime.UtcNow);
         _channel.Writer.TryWrite(new TransportReceiveMessage(datagram,
-            MeshatasticTransportAddress.ToTransportAddress(from)));
+            MeshtasticTransportAddress.ToTransportAddress(from)));
     }
 
     private void OnSnapshotFrame(byte[] bytes)

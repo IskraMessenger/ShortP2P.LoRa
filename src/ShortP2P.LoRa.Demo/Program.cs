@@ -3,7 +3,7 @@ using Microsoft.Extensions.Logging;
 using ShortP2P.LoRa;
 using ShortP2P.LoRa.Jurisdiction;
 
-// Meshatastic air demo: sends 10-byte and 1-KB datagrams in a loop and prints
+// Meshtastic air demo: sends 10-byte and 1-KB datagrams in a loop and prints
 // every received datagram with an integrity check. Run on two boards and watch
 // the other side print your datagrams.
 
@@ -38,12 +38,12 @@ var to = ParseNode(Arg(args, "to") ?? "broadcast");
 var intervalSeconds = double.TryParse(Arg(args, "interval"), out var iv) ? iv : 5.0;
 
 var logger = new ConsoleLogger();
-var options = new MeshatasticTransportOptions
+var options = new MeshtasticTransportOptions
 {
     ComPort = port,
     Jurisdiction = region
 };
-await using var transport = new MeshatasticTransport(options, logger);
+await using var transport = new MeshtasticTransport(options, logger);
 
 using var cts = new CancellationTokenSource();
 Console.CancelKeyPress += (_, e) =>
@@ -76,7 +76,7 @@ var rxTask = Task.Run(async () =>
             string from;
             try
             {
-                from = MeshatasticTransportAddress.FromTransportAddress(msg.RemoteAddress).ToHex();
+                from = MeshtasticTransportAddress.FromTransportAddress(msg.RemoteAddress).ToHex();
             }
             catch
             {
@@ -103,7 +103,7 @@ while (!cts.IsCancellationRequested)
     try
     {
         await transport.SendAsync(payload,
-            MeshatasticTransportAddress.ToTransportAddress(MeshId.FromNodeNumber(to)), cts.Token);
+            MeshtasticTransportAddress.ToTransportAddress(MeshId.FromNodeNumber(to)), cts.Token);
         var chunks = size <= 233 ? 1 : (size + 217) / 218;
         Console.WriteLine($"{Timestamp()} TX {size,5} B seq {seq} ({chunks} radio frame{(chunks > 1 ? "s" : "")})");
     }
@@ -148,7 +148,7 @@ static string? Arg(string[] argv, string name)
 static uint ParseNode(string text)
 {
     if (text.Equals("broadcast", StringComparison.OrdinalIgnoreCase))
-        return MeshatasticTransport.BroadcastNode;
+        return MeshtasticTransport.BroadcastNode;
     if (text.StartsWith("0x", StringComparison.OrdinalIgnoreCase))
         return Convert.ToUInt32(text[2..], 16);
     return uint.Parse(text);
@@ -192,11 +192,11 @@ static string Describe(ReadOnlySpan<byte> p)
 static void PrintUsage()
 {
     Console.WriteLine("""
-                      Meshatastic air demo — sends 10-byte and 1-KB datagrams in a loop,
+                      Meshtastic air demo — sends 10-byte and 1-KB datagrams in a loop,
                       prints every received datagram with an integrity check.
 
                       Usage:
-                        meshatastic-demo --port COM3 --region EU_868 [--to broadcast] [--interval 5]
+                        meshtastic-demo --port COM3 --region EU_868 [--to broadcast] [--interval 5]
 
                       Options:
                         --port       COM port of the Meshtastic board (required), e.g. COM3 or /dev/ttyUSB0

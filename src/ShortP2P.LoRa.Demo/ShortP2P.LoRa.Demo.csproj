@@ -6,8 +6,8 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <RootNamespace>ShortP2P.LoRa.Demo</RootNamespace>
-        <AssemblyName>meshatastic-demo</AssemblyName>
-        <Description>Console demo: sends 10-byte and 1-KB datagrams over the Meshatastic transport and prints received ones.</Description>
+        <AssemblyName>meshtastic-demo</AssemblyName>
+        <Description>Console demo: sends 10-byte and 1-KB datagrams over the Meshtastic transport and prints received ones.</Description>
         <IsPackable>false</IsPackable>
     </PropertyGroup>
 

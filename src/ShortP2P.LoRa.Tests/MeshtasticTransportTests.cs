@@ -7,7 +7,7 @@ using Xunit;
 
 namespace ShortP2P.LoRa.Tests;
 
-public class MeshatasticTransportTests
+public class MeshtasticTransportTests
 {
     private const uint AliceNode = 0xA1CE0001;
     private const uint BobNode = 0xB0B00002;
@@ -35,13 +35,13 @@ public class MeshatasticTransportTests
 
     private static TransportAddress Addr(uint node)
     {
-        return MeshatasticTransportAddress.ToTransportAddress(MeshId.FromNodeNumber(node));
+        return MeshtasticTransportAddress.ToTransportAddress(MeshId.FromNodeNumber(node));
     }
 
-    private static MeshatasticTransportOptions MakeOptions(int retries = 0, byte[]? networkId = null,
+    private static MeshtasticTransportOptions MakeOptions(int retries = 0, byte[]? networkId = null,
         JurisdictionProfile? jurisdiction = null)
     {
-        return new MeshatasticTransportOptions
+        return new MeshtasticTransportOptions
         {
             ComPort = "FAKE",
             Jurisdiction = jurisdiction ?? JurisdictionCatalog.Require("EU_868"),
@@ -58,19 +58,19 @@ public class MeshatasticTransportTests
         };
     }
 
-    private static async Task<(MeshatasticTransport A, MeshatasticTransport B, FakeMeshLink LinkA, FakeMeshLink LinkB)>
+    private static async Task<(MeshtasticTransport A, MeshtasticTransport B, FakeMeshLink LinkA, FakeMeshLink LinkB)>
         StartPairAsync(int aliceRetries = 0, int bobRetries = 0, bool withNetworkIds = false)
     {
         var (linkA, linkB) = FakeMeshLink.CreatePair(AliceNode, BobNode);
         var net = withNetworkIds ? NetworkId : null;
-        var a = new MeshatasticTransport(MakeOptions(aliceRetries, net), linkA);
-        var b = new MeshatasticTransport(MakeOptions(bobRetries, net), linkB);
+        var a = new MeshtasticTransport(MakeOptions(aliceRetries, net), linkA);
+        var b = new MeshtasticTransport(MakeOptions(bobRetries, net), linkB);
         await a.StartAsync();
         await b.StartAsync();
         return (a, b, linkA, linkB);
     }
 
-    private static async Task<byte[]> NextInboundAsync(MeshatasticTransport t, TimeSpan timeout)
+    private static async Task<byte[]> NextInboundAsync(MeshtasticTransport t, TimeSpan timeout)
     {
         using var cts = new CancellationTokenSource(timeout);
         var msg = await t.Inbound.ReadAsync(cts.Token);
@@ -153,7 +153,7 @@ public class MeshatasticTransportTests
     {
         var (linkA, _) = FakeMeshLink.CreatePair(AliceNode, BobNode);
         var options = MakeOptions(jurisdiction: JurisdictionCatalog.Unset);
-        var a = new MeshatasticTransport(options, linkA);
+        var a = new MeshtasticTransport(options, linkA);
         await a.StartAsync();
 
         await Assert.ThrowsAsync<InvalidOperationException>(() => a.SendAsync(Cipher(), Addr(BobNode)).AsTask());

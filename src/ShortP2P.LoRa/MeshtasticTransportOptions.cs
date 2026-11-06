@@ -5,11 +5,11 @@ using ShortP2P.LoRa.Reliability;
 namespace ShortP2P.LoRa;
 
 /// <summary>
-///     Configuration of the Meshatastic transport: the LoRa board serial link,
+///     Configuration of the Meshtastic transport: the LoRa board serial link,
 ///     the selected jurisdiction profile, and the retry settings (REQ-CFG-2, REQ-CFG-3).
 ///     Board name/model is deliberately not configured (REQ-CFG-2) — the board reports it after connect.
 /// </summary>
-public sealed record MeshatasticTransportOptions
+public sealed record MeshtasticTransportOptions
 {
     /// <summary>COM port of the LoRa board, e.g. "COM3" or "/dev/ttyUSB0". Required.</summary>
     public required string ComPort { get; init; }
