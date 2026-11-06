@@ -93,7 +93,7 @@ public sealed class MeshatasticTransport : ITransport
         _started = true;
 
         _cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        _sweepTask = Task.Run(() => SweepLoopAsync(_cts.Token));
+        _sweepTask = Task.Run(() => SweepLoopAsync(_cts.Token), cancellationToken);
 
         QueueDirectorySnapshot();
     }

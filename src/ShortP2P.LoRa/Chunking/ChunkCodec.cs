@@ -13,22 +13,13 @@ namespace ShortP2P.LoRa.Chunking;
 /// </summary>
 public static class ChunkCodec
 {
-    public const int IdLength = 6;
-    public const int HeaderLength = 15;
+    public const short IdLength = 6;
+    public const short HeaderLength = 15;
 
     private const string Letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
     private const string LettersAndDigits = Letters + "0123456789";
 
-    public static bool IsLetter(byte b)
-    {
-        return b is >= (byte)'A' and <= (byte)'Z' or >= (byte)'a' and <= (byte)'z';
-    }
-
-    /// <summary>Quick check whether a radio frame is a chunk (strict parse is <see cref="TryParse" />).</summary>
-    public static bool LooksLikeChunk(ReadOnlySpan<byte> frame)
-    {
-        return frame.Length > HeaderLength && IsLetter(frame[0]);
-    }
+    public static bool IsLetter(byte b) => b is >= (byte)'A' and <= (byte)'Z' or >= (byte)'a' and <= (byte)'z';
 
     /// <summary>New compressed id: [A-Za-z][A-Za-z0-9]{5}.</summary>
     public static string NewId()
@@ -46,6 +37,7 @@ public static class ChunkCodec
     {
         if (id.Length != IdLength || !IsLetter((byte)id[0]))
             throw new ArgumentException("Compressed id must be 6 chars, first one a letter.", nameof(id));
+        
         foreach (var c in id)
             if (!IsLetter((byte)c) && c is < '0' or > '9')
                 throw new ArgumentException("Compressed id may contain only A-Za-z0-9.", nameof(id));
@@ -89,6 +81,7 @@ public static class ChunkCodec
         var crcType = frame[10];
         var crc = BinaryPrimitives.ReadUInt32BigEndian(frame.Slice(11, 4));
         chunk = new MeshChunk(id, number, total, crcType, crc, frame[HeaderLength..].ToArray());
+        
         return true;
     }
 }

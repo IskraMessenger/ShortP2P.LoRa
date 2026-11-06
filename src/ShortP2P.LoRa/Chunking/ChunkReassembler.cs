@@ -39,10 +39,7 @@ public sealed class ChunkReassembler
 
     private readonly Dictionary<string, State> _states = new(StringComparer.Ordinal);
 
-    private static string KeyOf(MeshId from, string id)
-    {
-        return from.ToHex() + ":" + id;
-    }
+    private static string KeyOf(MeshId from, string id) => $"{from.ToHex()}:{id}";
 
     public ChunkAddResult Add(MeshId from, in MeshChunk chunk, DateTime utcNow, out byte[]? datagram)
     {
