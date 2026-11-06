@@ -1,10 +1,14 @@
-# Meshtastic board bring-up (Heltec WiFi LoRa 32 V3)
+# Meshtastic board bring-up
 
 How to get a LoRa board from the box to exchanging datagrams, and how to verify
 the link with the `ShortP2P.LoRa.Demo` console app.
 
-Target board: **Heltec WiFi LoRa 32 V3** (PCB marking `HTIT-WB32LAF`, ESP32-S3 + SX1262),
-firmware target `heltec-v3`. Two boards are needed for an RX/TX test.
+Works for any board supported by Meshtastic (see the device list in the
+[web flasher](https://flasher.meshtastic.org)). Two boards are needed for an RX/TX test.
+
+> **Tested on:** Heltec WiFi LoRa 32 V3 (PCB marking `HTIT-WB32LAF`, ESP32-S3 + SX1262,
+> firmware target `heltec-v3`, Meshtastic 2.7.26). Button labels, USB behavior, and port
+> names on other boards may differ — the overall flow is the same.
 
 ## 0. Prerequisites
 
@@ -15,22 +19,27 @@ firmware target `heltec-v3`. Two boards are needed for an RX/TX test.
 
 ## 1. Flash the Meshtastic firmware
 
-Easiest: [flasher.meshtastic.org](https://flasher.meshtastic.org) → device **Heltec V3** →
+Easiest: [flasher.meshtastic.org](https://flasher.meshtastic.org) → pick **your device** →
 latest stable → *Full erase* on first flash.
 
-Manual way (what we use):
+Manual way:
 
-1. Download `firmware-esp32s3-<version>.zip` from
-   [meshtastic/firmware releases](https://github.com/meshtastic/firmware/releases/latest) and extract it.
-2. Inside, the board file is `firmware-heltec-v3-<version>.factory.bin` (factory = first flash at `0x0`;
+1. Download the firmware zip **for your MCU platform** (`firmware-esp32s3-*.zip`,
+   `firmware-esp32-*.zip`, `firmware-nrf52840-*.zip`, ...) from
+   [meshtastic/firmware releases](https://github.com/meshtastic/firmware/releases/latest)
+   and extract it.
+2. Pick `firmware-<your-target>-<version>.factory.bin` (factory = first flash;
    the plain `.bin` is for OTA updates only).
-3. Enter **download mode**: hold **BOOT** → press **RST** → release **BOOT**.
-   The screen stays blank and a **new COM port** appears in Device Manager
-   (often a different number than the running-firmware one).
-4. Flash:
+3. Enter **download mode**:
+   - **ESP32 / ESP32-S3 / C3:** hold **BOOT** → press **RST** → release **BOOT**.
+     The screen stays blank. On native-USB boards (ESP32-S3) a **new COM port** appears
+     in Device Manager — often a different number than the running-firmware one; use that.
+   - **nRF52 (e.g. RAK4631, T114):** double-press **RST** — the board mounts as a USB drive;
+     copy the `.uf2` firmware file onto it.
+4. Flash (ESP32 example):
 
    ```powershell
-   esptool --chip esp32s3 --port COM<new> --baud 115200 write_flash 0x0 firmware-heltec-v3-<version>.factory.bin
+   esptool --chip esp32s3 --port COM<new> --baud 115200 write_flash 0x0 firmware-<target>-<version>.factory.bin
    ```
 
 5. Press **RST** — the board boots into Meshtastic.
@@ -38,7 +47,7 @@ Manual way (what we use):
 Troubleshooting:
 
 - `Failed to connect ... No serial data received` — you are flashing the *application* COM port
-  or the board is not in download mode. Redo BOOT+RST and use the **new** port.
+  or the board is not in download mode. Redo the button dance and use the **new** port.
 - The bundled `device-install.bat` in the firmware zip has an inverted filename check
   (rejects valid `*.factory.bin` names); the esptool line above is equivalent to what it does
   for the main image. BLEOTA/littlefs parts it additionally flashes are optional.
