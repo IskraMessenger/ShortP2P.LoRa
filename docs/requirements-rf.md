@@ -188,11 +188,12 @@ RX From: 0x11223344 To: 0xA1B2C3D4 DateTimeUTC: 2025-12-02 19:12:32.456
 
 ### Info
 
-Log lifecycle events:
+Log lifecycle and configuration events:
 
 - connect to ESP (device / serial / transport link up), including device identity when known;
 - disconnect from ESP (link down, intentional stop, or unexpected loss);
-- session setup (start, success, failure reason at Info without dumping secrets).
+- session setup (start, success, failure reason at Info without dumping secrets);
+- change of **region** and radio parameters: **power**, **freq**, **channel**, **duty_cycle** (log old → new values, and whether a regulatory override / at-own-risk confirmation was used).
 
 ### Error
 
@@ -206,7 +207,7 @@ Error entries MUST include `DateTimeUTC` and enough context to diagnose (operati
 ### Acceptance (logging)
 
 1. With Debug enabled, each successful TX/RX produces a line matching the `From` / `To` / `DateTimeUTC` pattern above.
-2. Connect, disconnect, and session setup each produce at least one Info event.
+2. Connect, disconnect, session setup, and each change of region / power / freq / channel / duty_cycle each produce at least one Info event.
 3. Injected protocol violation and simulated device fault each produce an Error event with UTC timestamp and context.
 4. Secrets and message plaintext are absent from Debug / Info / Error output.
 
