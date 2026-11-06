@@ -222,7 +222,7 @@ internal sealed class ConsoleLogger : ILogger
 
     public bool IsEnabled(LogLevel logLevel)
     {
-        return logLevel >= LogLevel.Information;
+        return logLevel >= LogLevel.Debug;
     }
 
     public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception,
