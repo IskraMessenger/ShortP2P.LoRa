@@ -12,7 +12,9 @@ Works for any board supported by Meshtastic (see the device list in the
 
 ## 0. Prerequisites
 
-- 2 × board + 2 × **data** USB cable (a charge-only cable shows no COM port at all)
+- 2 × board + 2 × **data** USB cable (a charge-only cable shows no COM port at all).
+  One cable is enough to flash boards one by one, but the RX/TX demo needs **both boards
+  plugged in at the same time** — one COM port and one app instance per board.
 - Antennas screwed onto **both** boards (TX without an antenna can damage the radio)
 - Chrome/Edge for the web flasher and the web client
 - .NET 10 SDK for the demo
