@@ -1,8 +1,8 @@
-# ShortP2P.LoRa — Meshatastic transport / wire requirements
+# ShortP2P.LoRa — Meshtastic transport / wire requirements
 
 Parent: [SMT-1](https://botticelli.youtrack.cloud/issues/SMT-1) (ShortP2P LoRa + Meshtastic). Tracked in [SMT-2](https://botticelli.youtrack.cloud/issues/SMT-2).
 
-This document fixes the structure of the Meshatastic transport and physical layer, its wire messages, the chunk / CRC / retry rules, and the NetworkId–MeshId directory. It does not invent a second chat protocol: ShortP2P wire frames from SMT-1 still apply. Radio frequency / power / duty-cycle limits live in [requirements-rf.md](requirements-rf.md).
+This document fixes the structure of the Meshtastic transport and physical layer, its wire messages, the chunk / CRC / retry rules, and the NetworkId–MeshId directory. It does not invent a second chat protocol: ShortP2P wire frames from SMT-1 still apply. Radio frequency / power / duty-cycle limits live in [requirements-rf.md](requirements-rf.md).
 
 Sources:
 
@@ -28,7 +28,7 @@ Board **name and model are not part of the config**. The board is already hidden
 
 ## REQ-CFG-3 — Retry settings
 
-Retry settings live in the same config as the COM port (`MeshatasticTransportOptions` / `RetryConfig`).
+Retry settings live in the same config as the COM port (`MeshtasticTransportOptions` / `RetryConfig`).
 
 | Setting | Default | Meaning |
 | --- | --- | --- |
@@ -44,7 +44,7 @@ Backoff is exponential: `interval(retry) = base · 2^retry`, so 1 s, 2 s, 4 s on
 
 ## REQ-TR-1 — ITransport
 
-`ShortP2P.LoRa` contains `MeshatasticTransport` that implements `ShortP2P.Transport.Abstractions.ITransport`:
+`ShortP2P.LoRa` contains `MeshtasticTransport` that implements `ShortP2P.Transport.Abstractions.ITransport`:
 
 - `Kind == 5` (`TransportKind.Meshtastic`, already reserved in this repo; must not collide with `Udp` = 1, `Bluetooth` = 2, `Infrared` = 3, `MessengerServer` = 4);
 - `StartAsync` / `StopAsync` open and close the serial link;
@@ -59,7 +59,7 @@ There is no UDP port split on this transport. Invite and data share one pipe.
 
 ## REQ-WIRE-1 — Frames this transport carries
 
-Meshatastic does not define its own chat, invite, or handshake layout. `SendAsync` / `Inbound` carry the same bytes as ShortP2P on `dev/0.2`. The messenger demuxes by the first byte. Source of truth is the codecs in that tree. (`protocol.md` §3–§6 in ShortP2P still shows a 16-byte id; on `dev/0.2` `CompressedNetworkId.WireLength` is **12**.)
+Meshtastic does not define its own chat, invite, or handshake layout. `SendAsync` / `Inbound` carry the same bytes as ShortP2P on `dev/0.2`. The messenger demuxes by the first byte. Source of truth is the codecs in that tree. (`protocol.md` §3–§6 in ShortP2P still shows a 16-byte id; on `dev/0.2` `CompressedNetworkId.WireLength` is **12**.)
 
 | First byte | Name | Layout |
 | --- | --- | --- |
@@ -150,7 +150,7 @@ On receiving `0x33`, if the node is that TX MeshId and the message is still kept
 
 ## REQ-DIR-1 — MeshId
 
-One MeshId is the internal id of one Meshatastic/LoRa device. Opaque bytes, length 1–8. When the device exposes a hardware address, this is its **MAC** (6 bytes). It is what a `TransportAddress` of kind 5 carries.
+One MeshId is the internal id of one Meshtastic/LoRa device. Opaque bytes, length 1–8. When the device exposes a hardware address, this is its **MAC** (6 bytes). It is what a `TransportAddress` of kind 5 carries.
 
 ## REQ-DIR-2 — NetworkId → MeshId directory
 

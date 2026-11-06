@@ -143,6 +143,11 @@ public sealed class MeshtasticSerialLink : IMeshLink
                 {
                     break;
                 }
+                catch (TimeoutException)
+                {
+                    // SerialPort.ReadTimeout fired: no data within the window — poll again.
+                    continue;
+                }
                 catch (IOException)
                 {
                     await Task.Delay(100, cancellationToken).ConfigureAwait(false);
@@ -164,6 +169,10 @@ public sealed class MeshtasticSerialLink : IMeshLink
         catch (OperationCanceledException)
         {
             // normal shutdown
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogError(ex, "Meshtastic read loop on {Port} died; RX is down", _portName);
         }
     }
 
@@ -211,6 +220,10 @@ public sealed class MeshtasticSerialLink : IMeshLink
     {
         try
         {
+            // Field-level visibility for link bring-up: every top-level FromRadio field.
+            MeshtasticProto.ReadFields(payload, (number, wireType, _, bytes) =>
+                _logger?.LogDebug("FromRadio field {Number} (wire {Wire}, {Len} B)", number, wireType, bytes.Length));
+
             MeshtasticProto.ReadFromRadio(
                 payload,
                 onPacket: frame =>
